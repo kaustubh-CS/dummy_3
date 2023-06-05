@@ -59,8 +59,9 @@ jobs:
         import pandas as pd
         from tabulate import tabulate
         with open('talisman_report/talisman_reports/data/report.json') as f:
-            data = json.load(f)
+          data = json.load(f)
         df = pd.json_normalize(data['results'], 'failure_list', ['filename'])
+        df['commits'] = df['commits'].apply(lambda x: x[:3] if len(x) > 3 else x)
         print(tabulate(df, headers='keys', tablefmt='psql', showindex=False))
         "
 
