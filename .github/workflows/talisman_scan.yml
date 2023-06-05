@@ -43,29 +43,11 @@ jobs:
       run: |
        sudo apt-get install -y wkhtmltopdf
 
-    - name: List Talisman directory
-      run: |
-        ls -la ~/.talisman/bin
     - name: Run Talisman
       run: |
         ~/.talisman/bin/talisman_linux_amd64 --scan > talisman_report.json 2> talisman_error.txt || true
         ~/.talisman/bin/talisman_linux_amd64 --scanWithHtml 2> talisman_html_error.txt || true
         
-    - name: Print Talisman errors
-      run: |
-        echo "Talisman Error:"
-        cat talisman_error.txt
-        echo "Talisman HTML Error:"
-        cat talisman_html_error.txt
-            
-    - name: List Talisman report directory
-      run: |
-        ls -la talisman_report/talisman_reports/data
-        ls -la talisman_html_report
-    
-    - name: Print Talisman report
-      run: |
-        jq '.' < talisman_report/talisman_reports/data/report.json
     - name: Convert JSON to HTML
       run: |
         python3 -c "
