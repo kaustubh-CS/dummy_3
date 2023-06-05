@@ -82,6 +82,8 @@ jobs:
 
     - name: Display message
       run: |
+        echo ""
+        echo ""
         echo "An HTML report has been successfully generated as part of this workflow run. To review the report, please download the 'talisman-report' artifact available on the Summary page of this workflow run."
         echo ""
         echo "Please note that to view the 'index.html' file, a local server needs to be started due to the JavaScript content. This can be done by using the following command in the directory where the artifact has been unzipped: 'python3 -m http.server 8000'. Once the server is running, the report can be accessed at http://localhost:8000/."
