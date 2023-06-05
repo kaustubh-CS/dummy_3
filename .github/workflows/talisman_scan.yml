@@ -62,17 +62,18 @@ jobs:
       run: |
         jq '.' < talisman_report/talisman_reports/data/report.json
 
+    
     - name: Convert JSON to HTML
       run: |
         python3 -c "
         import json
-        from json2html import *
         with open('talisman_report/talisman_reports/data/report.json') as f:
-            data = json.load(f)
-        html = json2html.convert(json = data)
+          data = json.load(f)
+        html = '<html><body><pre>' + json.dumps(data, indent=4) + '</pre></body></html>'
         with open('talisman_html_report/report.html', 'w') as f:
-            f.write(html)
+         f.write(html)
         "
+
         
     - name: Upload HTML report
       uses: actions/upload-artifact@v2
