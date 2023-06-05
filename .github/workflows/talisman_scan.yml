@@ -47,7 +47,22 @@ jobs:
       run: |
         ~/.talisman/bin/talisman_linux_amd64 --scan > talisman_report.json 2> talisman_error.txt || true
         ~/.talisman/bin/talisman_linux_amd64 --scanWithHtml 2> talisman_html_error.txt || true
-        
+
+    - name: Print Talisman report to console
+      run: |
+        jq '.' < talisman_report/talisman_reports/data/report.json
+
+    - name: Print Talisman report neatly
+      run: |
+        python3 -c "
+        import json
+        import pandas as pd
+        with open('talisman_report/talisman_reports/data/report.json') as f:
+            data = json.load(f)
+        df = pd.json_normalize(data['results'], 'failure_list', ['filename'])
+        print(df.to_string(index=False))
+        "
+
     - name: Convert JSON to HTML
       run: |
         python3 -c "
