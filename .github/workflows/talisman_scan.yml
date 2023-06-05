@@ -1,0 +1,67 @@
+name: Talisman
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install Expect and jq
+      run: sudo apt-get install -y expect jq
+
+    - name: Install Talisman
+      run: |
+        curl --silent https://thoughtworks.github.io/talisman/scripts/install.bash > install.bash
+        chmod +x install.bash
+        expect -c '
+        set timeout -1
+        spawn ./install.bash --pre-push
+        expect "PLEASE CHOOSE WHERE YOU WISH TO SET TALISMAN_HOME VARIABLE AND talisman binary PATH (Enter option number): "
+        send "4\r"
+        expect "No git template directory is configured. Let'\''s add one."
+        send "1\r"
+        interact
+        '
+    - name: Install Talisman HTML Report
+      run: |
+        curl https://github.com/jaydeepc/talisman-html-report/archive/v1.3.zip  -o ~/.talisman/talisman_html_report.zip -J -L
+        cd ~/.talisman
+        unzip talisman_html_report.zip -d .
+        mv talisman-html-report-1.3 talisman_html_report
+        rm talisman_html_report.zip
+    - name: List Talisman directory
+      run: |
+        ls -la ~/.talisman/bin
+    - name: Run Talisman
+      run: |
+        ~/.talisman/bin/talisman_linux_amd64 --scan > talisman_report.json 2> talisman_error.txt || true
+        ~/.talisman/bin/talisman_linux_amd64 --scanWithHtml 2> talisman_html_error.txt || true
+        
+    - name: Print Talisman errors
+      run: |
+        echo "Talisman Error:"
+        cat talisman_error.txt
+        echo "Talisman HTML Error:"
+        cat talisman_html_error.txt
+            
+    - name: List Talisman report directory
+      run: |
+        ls -la talisman_report/talisman_reports/data
+        ls -la talisman_html_report
+    
+  
+    - name: Print Talisman report
+      run: |
+        jq '.' < talisman_report/talisman_reports/data/report.json
+        
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v2
+      with:
+        name: talisman-report
+        path: talisman_html_report/
