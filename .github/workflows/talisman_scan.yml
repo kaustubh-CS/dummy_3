@@ -16,7 +16,7 @@ jobs:
       run: sudo apt-get install -y expect jq python3 python3-pip
 
     - name: Install Python packages
-      run: pip install pandas json2html tabulate
+      run: pip install pandas matplotlib tabulate
 
     - name: Install Talisman
       run: |
@@ -31,17 +31,6 @@ jobs:
         send "1\r"
         interact
         '
-    - name: Install Talisman HTML Report
-      run: |
-        curl https://github.com/jaydeepc/talisman-html-report/archive/v1.3.zip  -o ~/.talisman/talisman_html_report.zip -J -L
-        cd ~/.talisman
-        unzip talisman_html_report.zip -d .
-        mv talisman-html-report-1.3 talisman_html_report
-        rm talisman_html_report.zip
-
-    - name: Install wkhtmltopdf
-      run: |
-       sudo apt-get install -y wkhtmltopdf
 
     - name: Run Talisman
       run: |
@@ -65,44 +54,28 @@ jobs:
         df['commits'] = df['commits'].apply(lambda x: x[:3] if len(x) > 3 else x)
         print(tabulate(df, headers='keys',tablefmt='psql', showindex=False))
         "
-
-    - name: Convert JSON to HTML
+    - name: Convert JSON to PDF
       run: |
         python3 -c "
         import json
-        import os
-        from json2html import *
+        import pandas as pd
+        import matplotlib.pyplot as plt
+        from pandas.plotting import table
         with open('talisman_report/talisman_reports/data/report.json') as f:
-            data = json.load(f)
-        html = json2html.convert(json = data)
-        os.makedirs('talisman_html_report', exist_ok=True)
-        with open('talisman_html_report/report.html', 'w') as f:
-            f.write(html)
-        "
-
-
-    - name: Convert HTML report to PDF
-      run: |
-        wkhtmltopdf talisman_html_report/report.html talisman_report.pdf
-
-    - name: Upload HTML report
-      uses: actions/upload-artifact@v2
-      with:
-        name: talisman-report
-        path: talisman_html_report/
-
+          data = json.load(f)
+        df = pd.json_normalize(data['results'], 'failure_list', ['filename'])
+        df['commits'] = df['commits'].apply(lambda x: x[:3] if len(x) > 3 else x)
+        fig, ax = plt.subplots(figsize=(12, 4)) # set size frame
+        ax.xaxis.set_visible(False)  # hide the x axis
+        ax.yaxis.set_visible(False)  # hide the y axis
+        tab = table(ax, df, loc='center', cellLoc = 'center')  # where df is your data frame
+        tab.auto_set_font_size(False) # Activate set fontsize manually
+        tab.set_fontsize(10) # if ++fontsize is necessary ++colWidths
+        tab.scale(1.2, 1.2) # Table size
+        plt.savefig('talisman_report.pdf')
+        "    
     - name: Upload PDF report
       uses: actions/upload-artifact@v2
       with:
         name: talisman-report-pdf
         path: talisman_report.pdf
-
-    - name: Display message
-      run: |
-        echo ""
-        echo ""
-        echo "An HTML report has been successfully generated as part of this workflow run. To review the report, please download the 'talisman-report' artifact available on the Summary page of this workflow run."
-        echo ""
-        echo "Please note that to view the 'index.html' file, a local server needs to be started due to the JavaScript content. This can be done by using the following command in the directory where the artifact has been unzipped: 'python3 -m http.server 8000'. Once the server is running, the report can be accessed at http://localhost:8000/."
-        echo ""
-        echo "Alternatively, if you prefer not to start a server, you can directly view the 'report.html' file included in the downloaded artifact. This file contains the same information as the 'index.html' file, but in a static HTML format."
