@@ -45,8 +45,9 @@ jobs:
 
     - name: Run Talisman
       run: |
-        ~/.talisman/bin/talisman_linux_amd64 --scan > talisman_report.json 2> talisman_error.txt || true
-        ~/.talisman/bin/talisman_linux_amd64 --scanWithHtml 2> talisman_html_error.txt || true
+        ~/.talisman/bin/talisman_linux_amd64 --scan > talisman_report.json 2> talisman_error.txt
+        ~/.talisman/bin/talisman_linux_amd64 --scanWithHtml 2> talisman_html_error.txt
+      continue-on-error: true
 
     - name: Print Talisman report to console
       run: |
@@ -62,7 +63,7 @@ jobs:
           data = json.load(f)
         df = pd.json_normalize(data['results'], 'failure_list', ['filename'])
         df['commits'] = df['commits'].apply(lambda x: x[:3] if len(x) > 3 else x)
-        print(tabulate(df, headers='keys', tablefmt='psql', showindex=False))
+        print(tabulate(df, headers='keys',tablefmt='psql', showindex=False))
         "
 
     - name: Convert JSON to HTML
